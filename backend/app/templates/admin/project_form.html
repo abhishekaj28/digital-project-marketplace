@@ -1,0 +1,494 @@
+{% extends "admin/base_admin.html" %}
+{% block title %}{{ 'Edit Project' if project else 'Create New Project' }} | Tech Project Marketplace{% endblock %}
+
+{% block styles %}
+<!-- Quill Rich Text Editor Theme -->
+<link href="https://cdn.jsdelivr.net/npm/quill@2.0.0-rc.2/dist/quill.snow.css" rel="stylesheet" />
+<style>
+  .section-card {
+    border-top: 3px solid var(--admin-accent-blue) !important;
+    margin-bottom: 2rem;
+  }
+  .section-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--admin-accent-blue);
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .ql-toolbar {
+    background-color: var(--admin-bg-secondary) !important;
+    border-color: var(--admin-border-glass) !important;
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+  }
+  .ql-container {
+    background-color: rgba(255, 255, 255, 0.02) !important;
+    border-color: var(--admin-border-glass) !important;
+    border-bottom-left-radius: 8px;
+    border-bottom-right-radius: 8px;
+    height: 250px;
+    color: var(--admin-text-primary);
+    font-family: 'Outfit', sans-serif;
+    font-size: 1rem;
+  }
+  .ql-stroke {
+    stroke: var(--admin-text-secondary) !important;
+  }
+  .ql-fill {
+    fill: var(--admin-text-secondary) !important;
+  }
+  .img-preview-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .img-preview-box {
+    position: relative;
+    width: 100px;
+    height: 75px;
+    border-radius: 6px;
+    overflow: hidden;
+    border: 1px solid var(--admin-border-glass);
+  }
+  .img-preview-box img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h1 class="h3 mb-0 fw-bold">{{ 'Edit Project' if project else 'Create New Project' }}</h1>
+    <p class="text-secondary small mb-0">{{ 'Modify details, replace attachments, or toggle featured slots.' if project else 'Fill out listing details, academic variables, and zip/pdf deliverables.' }}</p>
+  </div>
+  <a href="{{ url_for('admin.projects') }}" class="btn btn-outline-secondary">
+    <i class="bi bi-arrow-left me-1"></i> Back to Projects
+  </a>
+</div>
+
+<form method="post" enctype="multipart/form-data" id="projectForm"
+      action="{{ url_for('admin.projects_edit_post', project_id=project._id) if project else url_for('admin.projects_new_post') }}">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  
+  <!-- SECTION 1: Basic Information -->
+  <div class="card p-4 section-card">
+    <h2 class="section-title"><i class="bi bi-info-circle"></i> Section 1: Basic Information</h2>
+    
+    <div class="row g-3">
+      <!-- Title -->
+      <div class="col-md-6">
+        <label class="form-label small text-secondary fw-semibold">Project Title</label>
+        <input type="text" class="form-control" name="title" id="proj-title" value="{{ project.title if project else '' }}" required placeholder="e.g. AI Resume Screening System">
+      </div>
+      
+      <!-- Slug -->
+      <div class="col-md-6">
+        <label class="form-label small text-secondary fw-semibold">Project Slug</label>
+        <input type="text" class="form-control" name="slug" id="proj-slug" value="{{ project.slug if project else '' }}" required placeholder="e.g. ai-resume-screening-system">
+      </div>
+      
+      <!-- Category Dropdown -->
+      <div class="col-md-6">
+        <label class="form-label small text-secondary fw-semibold">Category</label>
+        <select class="form-select" name="category_id" required>
+          <option value="" disabled selected>Select Category</option>
+          {% for c in categories %}
+            <option value="{{ c._id }}" {% if project and project.category_id == c._id %}selected{% endif %}>{{ c.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      
+      <!-- Subcategory Dropdown -->
+      <div class="col-md-6">
+        <label class="form-label small text-secondary fw-semibold">Subcategory</label>
+        <input type="text" class="form-control" name="subcategory" value="{{ project.subcategory if project else '' }}" placeholder="e.g. Natural Language Processing">
+      </div>
+
+      <!-- Short Description -->
+      <div class="col-12">
+        <label class="form-label small text-secondary fw-semibold">Short Description</label>
+        <input type="text" class="form-control" name="short_desc" value="{{ project.short_desc if project else '' }}" placeholder="One sentence summary of the project features..." required>
+      </div>
+      
+      <!-- Full Description (Rich Text Editor) -->
+      <div class="col-12">
+        <label class="form-label small text-secondary fw-semibold">Full Description</label>
+        <!-- Editor element -->
+        <div id="editor-container">{{ project.long_desc|safe if project else '' }}</div>
+        <!-- Hidden input to bind value -->
+        <input type="hidden" name="long_desc" id="long-desc-input">
+      </div>
+
+      <!-- Price -->
+      <div class="col-md-6">
+        <label class="form-label small text-secondary fw-semibold">Project Price (INR)</label>
+        <div class="input-group">
+          <span class="input-group-text bg-transparent border-end-0 border-secondary border-opacity-20 text-success fw-bold">₹</span>
+          <input type="number" class="form-control border-start-0 border-secondary border-opacity-20" name="price_inr" value="{{ project.price_inr if project else 499 }}" required min="0">
+        </div>
+      </div>
+      
+      <!-- Featured toggle -->
+      <div class="col-md-6 d-flex align-items-center">
+        <div class="form-check form-switch mt-4">
+          <input class="form-check-input" type="checkbox" name="is_featured" id="is_featured" {% if project and project.is_featured %}checked{% endif %}>
+          <label class="form-check-label text-white small fw-semibold" for="is_featured">Mark as Featured Project</label>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 2: Thumbnails -->
+  <div class="card p-4 section-card">
+    <h2 class="section-title"><i class="bi bi-image"></i> Section 2: Thumbnails</h2>
+    
+    <div class="row g-3">
+      <!-- Cover Image -->
+      <div class="col-md-6">
+        <label class="form-label small text-secondary fw-semibold">Upload Cover Image</label>
+        <input type="file" class="form-control" name="cover_image" id="cover-img-input" accept="image/*">
+        
+        <div class="mt-3">
+          <div class="small text-secondary mb-1">Cover Preview:</div>
+          <div class="img-preview-box" id="cover-preview-box" style="width: 140px; height: 95px;">
+            {% if project and project.cover_image %}
+              <img src="{{ url_for('main.public_uploads', key=project.cover_image) }}" alt="Cover">
+            {% else %}
+              <div class="d-flex align-items-center justify-content-center h-100 text-muted small bg-dark bg-opacity-20">No Image</div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      
+      <!-- Gallery Images -->
+      <div class="col-md-6">
+        <label class="form-label small text-secondary fw-semibold">Upload Gallery Screenshots</label>
+        <input type="file" class="form-control" name="gallery_images" id="gallery-img-input" accept="image/*" multiple>
+        
+        <div class="mt-3">
+          <div class="small text-secondary mb-1">Screenshots Selected:</div>
+          <div class="img-preview-container" id="gallery-preview-container">
+            {% if project and project.gallery_images %}
+              {% for img in project.gallery_images %}
+                <div class="img-preview-box">
+                  <img src="{{ url_for('main.public_uploads', key=img) }}" alt="Screenshot">
+                  <div class="form-check mt-1">
+                    <input class="form-check-input" type="checkbox" name="remove_gallery" value="{{ loop.index0 }}" id="rm-gal-{{ loop.index0 }}">
+                    <label class="form-check-label text-danger small" style="font-size: 0.75rem;" for="rm-gal-{{ loop.index0 }}">Remove</label>
+                  </div>
+                </div>
+              {% endfor %}
+            {% else %}
+              <div class="text-muted small py-2">No screenshots uploaded.</div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 3: Files -->
+  <div class="card p-4 section-card">
+    <h2 class="section-title"><i class="bi bi-file-earmark-arrow-up"></i> Section 3: Project Deliverables</h2>
+    
+    <div class="row g-3">
+      <!-- ZIP Source Code -->
+      <div class="col-md-4">
+        <label class="form-label small text-secondary fw-semibold">Source Code (ZIP)</label>
+        <input type="file" class="form-control" name="zip_file" accept=".zip,.rar,.tar,.gz">
+      </div>
+      
+      <!-- Documentation PDF -->
+      <div class="col-md-4">
+        <label class="form-label small text-secondary fw-semibold">Documentation Report (PDF)</label>
+        <input type="file" class="form-control" name="doc_file" accept=".pdf">
+      </div>
+      
+      <!-- PPT Presentation -->
+      <div class="col-md-4">
+        <label class="form-label small text-secondary fw-semibold">Presentation (PPTX/PPT)</label>
+        <input type="file" class="form-control" name="ppt_file" accept=".ppt,.pptx">
+      </div>
+      
+      <!-- Abstract PDF -->
+      <div class="col-md-4">
+        <label class="form-label small text-secondary fw-semibold">Project Abstract (PDF)</label>
+        <input type="file" class="form-control" name="abstract_file" accept=".pdf">
+      </div>
+      
+      <!-- Viva PDF -->
+      <div class="col-md-4">
+        <label class="form-label small text-secondary fw-semibold">Viva Q&A Prep (PDF)</label>
+        <input type="file" class="form-control" name="viva_file" accept=".pdf">
+      </div>
+      
+      <!-- README file -->
+      <div class="col-md-4">
+        <label class="form-label small text-secondary fw-semibold">README Instructions (TXT/MD)</label>
+        <input type="file" class="form-control" name="readme_file" accept=".txt,.md">
+      </div>
+
+      <!-- Multiple Additional Files -->
+      <div class="col-12 mt-4 border-top border-secondary border-opacity-10 pt-3">
+        <label class="form-label small text-secondary fw-semibold d-block">Additional Download Files</label>
+        <div id="additional-files-container">
+          <!-- Rows will be injected here via javascript -->
+        </div>
+        <button type="button" class="btn btn-outline-primary btn-sm mt-2" id="add-file-row-btn">
+          <i class="bi bi-plus-lg"></i> Add File Row
+        </button>
+      </div>
+
+      <!-- Existing Files List (For Editing) -->
+      {% if project and project.artifacts %}
+        <div class="col-12 mt-3 bg-dark bg-opacity-25 p-3 rounded" style="border: 1px solid var(--admin-border-glass);">
+          <div class="fw-semibold text-white small mb-2"><i class="bi bi-file-earmark-check"></i> Uploaded Deliverables Index:</div>
+          <div class="row g-2">
+            {% for a in project.artifacts %}
+              <div class="col-md-6">
+                <div class="card p-2 bg-transparent border-secondary border-opacity-10 d-flex flex-row align-items-center justify-content-between">
+                  <div class="d-flex align-items-center gap-2">
+                    <i class="bi bi-file-earmark-zip text-info"></i>
+                    <div>
+                      <div class="fw-semibold small">{{ a.label }}</div>
+                      <a href="{{ url_for('payments.download_artifact', project_id=project._id, artifact_index=loop.index0) }}" class="text-primary small" style="font-size: 0.8rem;">Download file</a>
+                    </div>
+                  </div>
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" name="remove_artifacts" value="{{ loop.index0 }}" id="rm-art-{{ loop.index0 }}">
+                    <label class="form-check-label text-danger small" for="rm-art-{{ loop.index0 }}">Delete</label>
+                  </div>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- SECTION 4: Project Details -->
+  <div class="card p-4 section-card">
+    <h2 class="section-title"><i class="bi bi-sliders"></i> Section 4: Project Metadata</h2>
+    
+    <div class="row g-3">
+      <!-- Project Level -->
+      <div class="col-md-4">
+        <label class="form-label small text-secondary fw-semibold">Project Level</label>
+        <select class="form-select" name="level">
+          <option value="" disabled {% if not project %}selected{% endif %}>Select Level</option>
+          <option value="Mini Project" {% if project and project.level == 'Mini Project' %}selected{% endif %}>Mini Project</option>
+          <option value="Academic Project" {% if project and project.level == 'Academic Project' %}selected{% endif %}>Academic Project</option>
+          <option value="Final Year Project" {% if project and project.level == 'Final Year Project' %}selected{% endif %}>Final Year Project</option>
+          <option value="Research Project" {% if project and project.level == 'Research Project' %}selected{% endif %}>Research Project</option>
+        </select>
+      </div>
+      
+      <!-- Academic Branch -->
+      <div class="col-md-4">
+        <label class="form-label small text-secondary fw-semibold">Academic Branch</label>
+        <select class="form-select" name="branch">
+          <option value="" disabled {% if not project %}selected{% endif %}>Select Branch</option>
+          <option value="CSE" {% if project and project.branch == 'CSE' %}selected{% endif %}>CSE (Computer Science)</option>
+          <option value="IT" {% if project and project.branch == 'IT' %}selected{% endif %}>IT (Info Technology)</option>
+          <option value="ECE" {% if project and project.branch == 'ECE' %}selected{% endif %}>ECE (Electronics)</option>
+          <option value="EEE" {% if project and project.branch == 'EEE' %}selected{% endif %}>EEE (Electrical)</option>
+          <option value="MECH" {% if project and project.branch == 'MECH' %}selected{% endif %}>MECH (Mechanical)</option>
+          <option value="CIVIL" {% if project and project.branch == 'CIVIL' %}selected{% endif %}>CIVIL (Civil Eng)</option>
+          <option value="MBA" {% if project and project.branch == 'MBA' %}selected{% endif %}>MBA</option>
+          <option value="BBA" {% if project and project.branch == 'BBA' %}selected{% endif %}>BBA</option>
+          <option value="B.COM" {% if project and project.branch == 'B.COM' %}selected{% endif %}>B.COM</option>
+          <option value="M.COM" {% if project and project.branch == 'M.COM' %}selected{% endif %}>M.COM</option>
+          <option value="ARTS" {% if project and project.branch == 'ARTS' %}selected{% endif %}>ARTS</option>
+          <option value="HUMANITIES" {% if project and project.branch == 'HUMANITIES' %}selected{% endif %}>HUMANITIES</option>
+        </select>
+      </div>
+      
+      <!-- Technologies Used -->
+      <div class="col-md-4">
+        <label class="form-label small text-secondary fw-semibold">Technologies Used</label>
+        <input type="text" class="form-control" name="technology" value="{{ project.technology if project else '' }}" placeholder="e.g. Python, TensorFlow, Flask">
+      </div>
+      
+      <!-- Difficulty -->
+      <div class="col-md-4">
+        <label class="form-label small text-secondary fw-semibold">Difficulty Level</label>
+        <select class="form-select" name="difficulty">
+          <option value="Beginner" {% if project and project.difficulty == 'Beginner' %}selected{% endif %}>Beginner</option>
+          <option value="Intermediate" {% if project and project.difficulty == 'Intermediate' or not project %}selected{% endif %}>Intermediate</option>
+          <option value="Advanced" {% if project and project.difficulty == 'Advanced' %}selected{% endif %}>Advanced</option>
+        </select>
+      </div>
+      
+      <!-- Estimated completion hours -->
+      <div class="col-md-4">
+        <label class="form-label small text-secondary fw-semibold">Estimated Completion Time</label>
+        <input type="text" class="form-control" name="completion_time" value="{{ project.completion_time if project else '' }}" placeholder="e.g. 45 hours">
+      </div>
+      
+      <!-- Tags -->
+      <div class="col-md-4">
+        <label class="form-label small text-secondary fw-semibold">Search Tags (Comma-separated)</label>
+        <input type="text" class="form-control" name="tags" value="{{ project.tags_str if project else '' }}" placeholder="e.g. ml, neural networks, resume parsing">
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 5: Publish -->
+  <div class="card p-4 section-card">
+    <h2 class="section-title"><i class="bi bi-cloud-check"></i> Section 5: Publish Status</h2>
+    
+    <div class="d-flex justify-content-between align-items-center">
+      <div>
+        <label class="form-label small text-secondary fw-semibold d-block">Publication Status</label>
+        <div class="btn-group" role="group" aria-label="Status select toggles">
+          <input type="radio" class="btn-check" name="status" id="status-draft" value="draft" {% if project and project.status == 'draft' %}checked{% endif %}>
+          <label class="btn btn-outline-warning" for="status-draft">Draft Mode</label>
+
+          <input type="radio" class="btn-check" name="status" id="status-publish" value="published" {% if not project or project.status == 'published' %}checked{% endif %}>
+          <label class="btn btn-outline-success" for="status-publish">Publish Listing</label>
+        </div>
+      </div>
+      
+      <div class="d-flex gap-3">
+        <!-- If Draft -->
+        <button type="submit" class="btn btn-outline-primary px-4" id="save-draft-btn">Save Draft</button>
+        <!-- Standard submit -->
+        <button type="submit" class="btn btn-primary px-5" id="publish-btn">{{ 'Update Project' if project else 'Publish Project' }}</button>
+      </div>
+    </div>
+  </div>
+</form>
+{% endblock %}
+
+{% block scripts %}
+<!-- Quill Rich Text Editor Script -->
+<script src="https://cdn.jsdelivr.net/npm/quill@2.0.0-rc.2/dist/quill.js"></script>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function() {
+    // Quill.js initialization
+    const quill = new Quill('#editor-container', {
+      theme: 'snow',
+      modules: {
+        toolbar: [
+          [{ 'header': [1, 2, 3, false] }],
+          ['bold', 'italic', 'underline', 'strike'],
+          [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+          ['code-block', 'link'],
+          ['clean']
+        ]
+      }
+    });
+
+    // Auto-generate slug on typing Title
+    const titleInput = document.getElementById("proj-title");
+    const slugInput = document.getElementById("proj-slug");
+    
+    if (titleInput && slugInput) {
+      titleInput.addEventListener("input", function() {
+        // If not editing (or field is blank), generate slug
+        {% if not project %}
+        let text = titleInput.value.toString().toLowerCase().trim()
+          .replace(/&/g, '-and-')
+          .replace(/[^a-z0-9 -]/g, '')
+          .replace(/\s+/g, '-')
+          .replace(/-+/g, '-');
+        slugInput.value = text;
+        {% endif %}
+      });
+    }
+
+    // Set the hidden input value of full desc prior to form submissions
+    const form = document.getElementById("projectForm");
+    const descInput = document.getElementById("long-desc-input");
+    
+    form.addEventListener("submit", function() {
+      // Get HTML from editor
+      descInput.value = quill.getSemanticHTML();
+    });
+
+    // Save draft button trigger
+    const saveDraftBtn = document.getElementById("save-draft-btn");
+    const statusDraftRadio = document.getElementById("status-draft");
+    if (saveDraftBtn && statusDraftRadio) {
+      saveDraftBtn.addEventListener("click", function(e) {
+        statusDraftRadio.checked = true;
+      });
+    }
+
+    // Local image cover file previews
+    const coverInput = document.getElementById("cover-img-input");
+    const coverPreview = document.getElementById("cover-preview-box");
+    if (coverInput && coverPreview) {
+      coverInput.addEventListener("change", function() {
+        const file = coverInput.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = function(e) {
+            coverPreview.innerHTML = `<img src="${e.target.result}" alt="Cover preview">`;
+          };
+          reader.readAsDataURL(file);
+        }
+      });
+    }
+
+    // Local gallery multiple file previews
+    const galleryInput = document.getElementById("gallery-img-input");
+    const galleryPreview = document.getElementById("gallery-preview-container");
+    if (galleryInput && galleryPreview) {
+      galleryInput.addEventListener("change", function() {
+        // Clear previews if not appending, or show new selections
+        const files = galleryInput.files;
+        // Keep existing layout and append
+        for (let file of files) {
+          const reader = new FileReader();
+          reader.onload = function(e) {
+            const box = document.createElement("div");
+            box.className = "img-preview-box";
+            box.innerHTML = `<img src="${e.target.result}" alt="Preview">`;
+            galleryPreview.appendChild(box);
+          };
+          reader.readAsDataURL(file);
+        }
+      });
+    }
+
+    // Additional generic files row appender
+    const addFileBtn = document.getElementById("add-file-row-btn");
+    const filesContainer = document.getElementById("additional-files-container");
+    
+    if (addFileBtn && filesContainer) {
+      addFileBtn.addEventListener("click", function() {
+        const row = document.createElement("div");
+        row.className = "row g-2 mt-2 align-items-center file-row";
+        row.innerHTML = `
+          <div class="col-md-4">
+            <input type="text" class="form-control form-control-sm" name="artifact_label" placeholder="File Label (e.g. Dataset)">
+          </div>
+          <div class="col-md-7">
+            <input type="file" class="form-control form-control-sm" name="artifact_file" required>
+          </div>
+          <div class="col-md-1 text-center">
+            <button type="button" class="btn btn-outline-danger btn-sm rounded p-1 border-0 remove-row-btn"><i class="bi bi-x-lg"></i></button>
+          </div>
+        `;
+        filesContainer.appendChild(row);
+        
+        // Setup row delete click
+        row.querySelector(".remove-row-btn").addEventListener("click", function() {
+          row.remove();
+        });
+      });
+    }
+  });
+</script>
+{% endblock %}

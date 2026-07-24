@@ -1,0 +1,234 @@
+{% extends "admin/base_admin.html" %}
+{% block title %}Manage Categories | Tech Project Marketplace{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h1 class="h3 mb-0 fw-bold">Manage Categories</h1>
+    <p class="text-secondary small mb-0">Organize digital downloads, track projects in each domain, and manage listings.</p>
+  </div>
+  <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addCategoryModal">
+    <i class="bi bi-plus-lg me-1"></i> Add New Category
+  </button>
+</div>
+
+<!-- Categories Table Card -->
+<div class="card shadow-sm">
+  <div class="table-responsive">
+    <table class="table mb-0 align-middle">
+      <thead>
+        <tr>
+          <th>Category Name</th>
+          <th>Slug</th>
+          <th>Projects Count</th>
+          <th>Status</th>
+          <th>Created Date</th>
+          <th class="text-end">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for c in categories %}
+          <tr>
+            <td>
+              <div class="d-flex align-items-center gap-3">
+                {% if c.thumbnail %}
+                  <img src="{{ url_for('main.public_uploads', key=c.thumbnail) }}" alt="{{ c.name }}" class="rounded" style="width: 38px; height: 38px; object-fit: cover; border: 1px solid var(--admin-border-glass);">
+                {% else %}
+                  <div class="bg-primary bg-opacity-10 text-primary rounded d-flex align-items-center justify-content-center" style="width: 38px; height: 38px;">
+                    <i class="bi bi-folder-check"></i>
+                  </div>
+                {% endif %}
+                <div>
+                  <div class="fw-semibold">{{ c.name }}</div>
+                  <div class="text-secondary small text-truncate" style="max-width: 250px;" title="{{ c.description }}">{{ c.description }}</div>
+                </div>
+              </div>
+            </td>
+            <td><code class="text-info">{{ c.slug }}</code></td>
+            <td>
+              <span class="badge bg-secondary bg-opacity-25 text-light fw-medium">{{ c.projects_count }} projects</span>
+            </td>
+            <td>
+              {% if c.status == 'active' or not c.status %}
+                <span class="badge badge-soft-success">Active</span>
+              {% else %}
+                <span class="badge badge-soft-danger">Inactive</span>
+              {% endif %}
+            </td>
+            <td class="text-secondary small">
+              {{ c.created_at.strftime("%Y-%m-%d") if c.created_at else "N/A" }}
+            </td>
+            <td class="text-end">
+              <button class="btn btn-outline-primary btn-sm px-2.5 edit-category-btn" 
+                      data-id="{{ c._id }}"
+                      data-name="{{ c.name }}"
+                      data-slug="{{ c.slug }}"
+                      data-description="{{ c.description }}"
+                      data-status="{{ c.status or 'active' }}"
+                      data-bs-toggle="modal" 
+                      data-bs-target="#editCategoryModal"
+                      title="Edit Category">
+                <i class="bi bi-pencil-square"></i>
+              </button>
+              <form method="post" action="{{ url_for('admin.categories_delete', cat_id=c._id) }}" class="d-inline">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button class="btn btn-outline-danger btn-sm px-2.5 ms-1" onclick="return confirm('Are you sure you want to delete the category &ldquo;{{ c.name }}&rdquo;?')" title="Delete Category">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </form>
+            </td>
+          </tr>
+        {% else %}
+          <tr>
+            <td colspan="6" class="text-muted text-center py-5">
+              <i class="bi bi-tags fs-1 d-block mb-2 text-secondary"></i>
+              No categories configured. Click the button to add your first domain.
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ADD CATEGORY MODAL -->
+<div class="modal fade" id="addCategoryModal" tabindex="-1" aria-labelledby="addCategoryModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content card border-secondary border-opacity-30">
+      <div class="modal-header border-bottom border-secondary border-opacity-10 bg-transparent">
+        <h5 class="modal-title fw-bold" id="addCategoryModalLabel">Add New Category</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form method="post" action="{{ url_for('admin.categories_create') }}" enctype="multipart/form-data">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label small text-secondary fw-semibold">Category Name</label>
+            <input type="text" class="form-control" name="name" id="add-cat-name" placeholder="e.g. Artificial Intelligence" required autocomplete="off">
+          </div>
+          <div class="mb-3">
+            <label class="form-label small text-secondary fw-semibold">Slug (Auto Generated)</label>
+            <input type="text" class="form-control" name="slug" id="add-cat-slug" placeholder="e.g. artificial-intelligence" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label small text-secondary fw-semibold">Description</label>
+            <textarea class="form-control" name="description" rows="3" placeholder="Brief summary of projects in this category..."></textarea>
+          </div>
+          <div class="mb-3">
+            <label class="form-label small text-secondary fw-semibold">Category Thumbnail (Optional)</label>
+            <input type="file" class="form-control" name="thumbnail" accept="image/*">
+          </div>
+          <div class="mb-1">
+            <label class="form-label small text-secondary fw-semibold">Status</label>
+            <select class="form-select" name="status">
+              <option value="active" selected>Active</option>
+              <option value="inactive">Inactive</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer border-top border-secondary border-opacity-10 bg-transparent">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary">Create Category</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT CATEGORY MODAL -->
+<div class="modal fade" id="editCategoryModal" tabindex="-1" aria-labelledby="editCategoryModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content card border-secondary border-opacity-30">
+      <div class="modal-header border-bottom border-secondary border-opacity-10 bg-transparent">
+        <h5 class="modal-title fw-bold" id="editCategoryModalLabel">Edit Category</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form method="post" id="editCategoryForm" action="" enctype="multipart/form-data">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label small text-secondary fw-semibold">Category Name</label>
+            <input type="text" class="form-control" name="name" id="edit-cat-name" required autocomplete="off">
+          </div>
+          <div class="mb-3">
+            <label class="form-label small text-secondary fw-semibold">Slug (Auto Generated)</label>
+            <input type="text" class="form-control" name="slug" id="edit-cat-slug" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label small text-secondary fw-semibold">Description</label>
+            <textarea class="form-control" name="description" id="edit-cat-description" rows="3"></textarea>
+          </div>
+          <div class="mb-3">
+            <label class="form-label small text-secondary fw-semibold">Replace Thumbnail (Optional)</label>
+            <input type="file" class="form-control" name="thumbnail" accept="image/*">
+          </div>
+          <div class="mb-1">
+            <label class="form-label small text-secondary fw-semibold">Status</label>
+            <select class="form-select" name="status" id="edit-cat-status">
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer border-top border-secondary border-opacity-10 bg-transparent">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  document.addEventListener("DOMContentLoaded", function() {
+    // Slug generation utility helper
+    function slugify(text) {
+      return text.toString().toLowerCase().trim()
+        .replace(/&/g, '-and-')
+        .replace(/[^a-z0-9 -]/g, '')
+        .replace(/\s+/g, '-')
+        .replace(/-+/g, '-');
+    }
+
+    // Auto-generate slug during Add Category name inputs
+    const addNameInput = document.getElementById("add-cat-name");
+    const addSlugInput = document.getElementById("add-cat-slug");
+    addNameInput.addEventListener("input", function() {
+      addSlugInput.value = slugify(addNameInput.value);
+    });
+
+    // Auto-generate slug during Edit Category name inputs
+    const editNameInput = document.getElementById("edit-cat-name");
+    const editSlugInput = document.getElementById("edit-cat-slug");
+    editNameInput.addEventListener("input", function() {
+      editSlugInput.value = slugify(editNameInput.value);
+    });
+
+    // Populate Edit Category Modal fields when Edit button is clicked
+    const editButtons = document.querySelectorAll(".edit-category-btn");
+    const editForm = document.getElementById("editCategoryForm");
+    const editDesc = document.getElementById("edit-cat-description");
+    const editStatus = document.getElementById("edit-cat-status");
+
+    editButtons.forEach(btn => {
+      btn.addEventListener("click", function() {
+        const catId = this.getAttribute("data-id");
+        const name = this.getAttribute("data-name");
+        const slug = this.getAttribute("data-slug");
+        const desc = this.getAttribute("data-description");
+        const status = this.getAttribute("data-status");
+
+        // Set action url
+        editForm.setAttribute("action", "/admin/categories/" + catId + "/edit");
+        // Fill form inputs
+        editNameInput.value = name;
+        editSlugInput.value = slug;
+        editDesc.value = desc;
+        editStatus.value = status;
+      });
+    });
+  });
+</script>
+{% endblock %}

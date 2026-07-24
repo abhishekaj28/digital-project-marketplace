@@ -1,0 +1,147 @@
+{% extends "admin/base_admin.html" %}
+{% block title %}Manage Projects | Tech Project Marketplace{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h1 class="h3 mb-0 fw-bold">Manage Projects</h1>
+    <p class="text-secondary small mb-0">Browse and manage active project listings, download pricing configurations, and assets.</p>
+  </div>
+  <a href="{{ url_for('admin.projects_new') }}" class="btn btn-primary">
+    <i class="bi bi-cloud-arrow-up me-1"></i> Upload New Project
+  </a>
+</div>
+
+<!-- Filters Card -->
+<div class="card p-3 mb-4">
+  <form method="get" action="{{ url_for('admin.projects') }}" class="row g-2 align-items-end">
+    <!-- Keyword Search -->
+    <div class="col-md-3">
+      <label class="form-label small text-secondary fw-semibold">Search Keyword</label>
+      <input type="text" class="form-control form-control-sm" name="q" value="{{ q }}" placeholder="Search by title, desc...">
+    </div>
+    
+    <!-- Category Filter -->
+    <div class="col-md-3">
+      <label class="form-label small text-secondary fw-semibold">Category</label>
+      <select class="form-select form-select-sm" name="category">
+        <option value="">All Categories</option>
+        {% for c in categories_list %}
+          <option value="{{ c._id }}" {% if selected_category == c._id|string %}selected{% endif %}>{{ c.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    
+    <!-- Price Range Filter -->
+    <div class="col-md-2">
+      <label class="form-label small text-secondary fw-semibold">Price Range</label>
+      <select class="form-select form-select-sm" name="price">
+        <option value="">All Prices</option>
+        <option value="under500" {% if selected_price == 'under500' %}selected{% endif %}>Under ₹500</option>
+        <option value="500to1000" {% if selected_price == '500to1000' %}selected{% endif %}>₹500 - ₹1000</option>
+        <option value="over1000" {% if selected_price == 'over1000' %}selected{% endif %}>Over ₹1000</option>
+      </select>
+    </div>
+    
+    <!-- Status Filter -->
+    <div class="col-md-2">
+      <label class="form-label small text-secondary fw-semibold">Status</label>
+      <select class="form-select form-select-sm" name="status">
+        <option value="">All Status</option>
+        <option value="published" {% if selected_status == 'published' %}selected{% endif %}>Published</option>
+        <option value="draft" {% if selected_status == 'draft' %}selected{% endif %}>Draft</option>
+      </select>
+    </div>
+    
+    <!-- Search Buttons -->
+    <div class="col-md-2 d-flex gap-2">
+      <button type="submit" class="btn btn-primary btn-sm flex-grow-1"><i class="bi bi-funnel-fill"></i> Filter</button>
+      <a href="{{ url_for('admin.projects') }}" class="btn btn-outline-secondary btn-sm" title="Clear Filters"><i class="bi bi-x-circle"></i></a>
+    </div>
+  </form>
+</div>
+
+<!-- Project Table Card -->
+<div class="card shadow-sm">
+  <div class="table-responsive">
+    <table class="table mb-0 align-middle">
+      <thead>
+        <tr>
+          <th>Project Details</th>
+          <th>Category</th>
+          <th>Price</th>
+          <th>Sales/Downloads</th>
+          <th>Status</th>
+          <th>Created Date</th>
+          <th class="text-end">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in projects %}
+          <tr>
+            <td>
+              <div class="d-flex align-items-center gap-3">
+                {% if p.cover_image %}
+                  {% if '/' in p.cover_image %}
+                    <img src="{{ url_for('main.public_uploads', key=p.cover_image) }}" alt="{{ p.title }}" class="rounded" style="width: 50px; height: 38px; object-fit: cover; border: 1px solid var(--admin-border-glass);">
+                  {% else %}
+                    <img src="{{ url_for('main.public_uploads', key=p.cover_image) }}" alt="{{ p.title }}" class="rounded" style="width: 50px; height: 38px; object-fit: cover; border: 1px solid var(--admin-border-glass);">
+                  {% endif %}
+                {% else %}
+                  <div class="bg-primary bg-opacity-10 text-primary rounded d-flex align-items-center justify-content-center" style="width: 50px; height: 38px;">
+                    <i class="bi bi-file-earmark-zip"></i>
+                  </div>
+                {% endif %}
+                <div>
+                  <div class="fw-semibold text-truncate" style="max-width: 250px;" title="{{ p.title }}">{{ p.title }}</div>
+                  <div class="text-secondary small text-truncate" style="max-width: 250px;">{{ p.short_desc }}</div>
+                </div>
+              </div>
+            </td>
+            <td>
+              <span class="badge bg-secondary bg-opacity-25 text-light fw-medium">{{ p.category_name }}</span>
+            </td>
+            <td class="text-success fw-bold">₹{{ p.price_inr }}</td>
+            <td class="text-secondary fw-semibold">
+              <i class="bi bi-download me-1 text-secondary"></i> {{ p.sales_count }}
+            </td>
+            <td>
+              {% if p.status == 'published' or not p.status %}
+                <span class="badge badge-soft-success">Published</span>
+              {% elif p.status == 'draft' %}
+                <span class="badge badge-soft-warning">Draft</span>
+              {% else %}
+                <span class="badge badge-soft-danger">Suspended</span>
+              {% endif %}
+            </td>
+            <td class="text-secondary small">
+              {{ p.created_at.strftime("%Y-%m-%d") if p.created_at else "N/A" }}
+            </td>
+            <td class="text-end">
+              <a href="{{ url_for('main.project_detail', project_id=p._id) }}" class="btn btn-outline-secondary btn-sm px-2.5" target="_blank" title="View Listing">
+                <i class="bi bi-eye"></i>
+              </a>
+              <a href="{{ url_for('admin.projects_edit', project_id=p._id) }}" class="btn btn-outline-primary btn-sm px-2.5 ms-1" title="Edit Project">
+                <i class="bi bi-pencil-square"></i>
+              </a>
+              <form method="post" action="{{ url_for('admin.projects_delete', project_id=p._id) }}" class="d-inline">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button class="btn btn-outline-danger btn-sm px-2.5 ms-1" onclick="return confirm('Are you sure you want to delete the project &ldquo;{{ p.title }}&rdquo;?')" title="Delete Project">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </form>
+            </td>
+          </tr>
+        {% else %}
+          <tr>
+            <td colspan="7" class="text-muted text-center py-5">
+              <i class="bi bi-grid fs-1 d-block mb-2 text-secondary"></i>
+              No projects found matching the filter criteria.
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

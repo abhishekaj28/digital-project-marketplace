@@ -1,0 +1,72 @@
+{% extends "admin/base_admin.html" %}
+{% block title %}Webhook Events | Tech Project Marketplace{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h1 class="h3 mb-0 fw-bold">Webhook Events</h1>
+    <p class="text-secondary small mb-0">Browse and trace received payment webhook payloads, verification timestamps, and signature status.</p>
+  </div>
+</div>
+
+<!-- Filters Panel -->
+<div class="card p-3 mb-4">
+  <form class="row g-2 align-items-end" method="get">
+    <div class="col-md-4">
+      <label class="form-label small text-secondary fw-semibold">Event Type (contains)</label>
+      <input class="form-control form-control-sm" name="type" value="{{ q.type or '' }}" placeholder="e.g. payment.authorized">
+    </div>
+    <div class="col-md-4">
+      <label class="form-label small text-secondary fw-semibold">Event ID (contains)</label>
+      <input class="form-control form-control-sm" name="id" value="{{ q.id or '' }}" placeholder="Search ID...">
+    </div>
+    <div class="col-md-4 d-flex gap-2">
+      <button class="btn btn-primary btn-sm flex-grow-1" type="submit"><i class="bi bi-funnel"></i> Apply Filter</button>
+      <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('admin.webhooks') }}"><i class="bi bi-x-circle"></i> Clear</a>
+    </div>
+  </form>
+</div>
+
+<!-- Events Table Card -->
+<div class="card shadow-sm mb-4">
+  <div class="table-responsive">
+    <table class="table mb-0 align-middle">
+      <thead>
+        <tr>
+          <th>Timestamp</th>
+          <th>Event Type</th>
+          <th>Webhook Event ID</th>
+          <th>Signature Verification</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for e in events %}
+          <tr>
+            <td class="text-secondary small">
+              {{ e.created_at.strftime("%Y-%m-%d %H:%M:%S") if e.created_at else '—' }}
+            </td>
+            <td><code class="text-info">{{ e.event_type }}</code></td>
+            <td class="small">{{ e.event_id }}</td>
+            <td>
+              {% if e.signature_ok %}
+                <span class="badge badge-soft-success">Verified OK</span>
+              {% else %}
+                <span class="badge badge-soft-danger">Signature Error</span>
+              {% endif %}
+            </td>
+          </tr>
+        {% else %}
+          <tr>
+            <td colspan="4" class="text-muted text-center py-5">
+              <i class="bi bi-broadcast fs-1 d-block mb-2 text-secondary"></i>
+              No webhook events logged yet.
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% include "partials/pagination.html" %}
+{% endblock %}

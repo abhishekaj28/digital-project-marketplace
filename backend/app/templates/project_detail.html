@@ -1,0 +1,206 @@
+{% extends "base.html" %}
+{% block title %}{{ project.title }} | Project{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-start mb-3">
+  <div>
+    <h1 class="h4 mb-1">{{ project.title }}</h1>
+    <div class="text-muted small">{{ project.short_desc }}</div>
+  </div>
+  <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('main.category', slug=category.slug) }}">Back</a>
+</div>
+
+
+<div class="row g-3">
+  <div class="col-12">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h2 class="h6">Cover & Gallery</h2>
+        <div class="row g-2">
+          <div class="col-md-6">
+            {% if project.cover_image %}
+              <img class="img-fluid rounded border" alt="cover" src="{{ url_for('main.public_uploads', key=project.cover_image) }}">
+            {% else %}
+              <div class="text-muted small">No cover image.</div>
+            {% endif %}
+          </div>
+          <div class="col-md-6">
+            <div class="d-flex flex-wrap gap-2">
+              {% for im in project.gallery_images %}
+                <img style="width:110px;height:80px;object-fit:cover" class="rounded border" alt="gallery" src="{{ url_for('main.public_uploads', key=im) }}">
+              {% else %}
+                <div class="text-muted small">No gallery images.</div>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-8">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h2 class="h6">Description</h2>
+        <p class="mb-0">{{ project.long_desc }}</p>
+      </div>
+    </div>
+
+    <div class="card shadow-sm mt-3">
+      <div class="card-body">
+        <h2 class="h6">Included Artifacts</h2>
+        <ul class="mb-0">
+          {% for a in project.artifacts %}
+            <li>{{ a.label }}</li>
+          {% else %}
+            <li class="text-muted">No artifacts uploaded yet.</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-4">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center">
+          <span class="fw-semibold">Price</span>
+          <span class="badge text-bg-light fs-6">₹{{ project.price_inr }}</span>
+        </div>
+
+        {% if current_user.is_authenticated and owned %}
+          <div class="mt-3">
+            <span class="badge badge-soft">Purchased</span>
+          </div>
+
+          <hr>
+          <div class="small text-muted mb-2">Download</div>
+          {% for a in project.artifacts %}
+            <a class="btn btn-outline-success btn-sm w-100 mb-2"
+               href="{{ url_for('payments.download_artifact', project_id=project._id, artifact_index=loop.index0) }}">
+              <i class="bi bi-download me-1"></i>{{ a.label }}
+            </a>
+          {% endfor %}
+        {% elif current_user.is_authenticated %}
+          <button class="btn btn-primary w-100 mt-3" id="buyBtn"><i class="bi bi-credit-card me-1"></i>Buy & Download</button>
+          <div class="text-muted small mt-2">Payments via Razorpay (UPI/cards/netbanking/wallets).</div>
+        {% else %}
+          <a class="btn btn-primary w-100 mt-3" href="{{ url_for('auth.login') }}">Login to Buy</a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{% if current_user.is_authenticated and not owned %}
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script>
+const buyBtn = document.getElementById("buyBtn");
+buyBtn?.addEventListener("click", async () => {
+  buyBtn.disabled = true;
+  buyBtn.innerText = "Creating order...";
+  try {
+    const resp = await fetch("{{ url_for('payments.create_order') }}", {
+      method: "POST",
+      headers: {"Content-Type":"application/json","X-CSRFToken": (document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || "")},
+      body: JSON.stringify({project_id: "{{ project._id }}"})
+    });
+    let data = {};
+    try { data = await resp.json(); } catch(e) { data = {}; }
+    if (!resp.ok) {
+      const msg = data.error || ("HTTP " + resp.status);
+      throw new Error(msg);
+    }
+    if (data.already_owned) {
+      location.reload();
+      return;
+    }
+    if (data.error) {
+      alert(data.error);
+      buyBtn.disabled = false;
+      buyBtn.innerText = "Buy & Download";
+      return;
+    }
+
+    if (data.is_mock) {
+      const simulateSuccess = confirm("Razorpay Sandbox Mode: Press OK to simulate a successful payment or Cancel to simulate failure.");
+      if (simulateSuccess) {
+          const mockPaymentId = "pay_mock_" + Math.random().toString(36).substr(2, 9);
+          buyBtn.innerText = "Verifying sandbox payment...";
+          const vResp = await fetch("/payments/verify", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "X-CSRFToken": (document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || "")
+            },
+            body: JSON.stringify({
+              razorpay_order_id: data.order_id,
+              razorpay_payment_id: mockPaymentId,
+              razorpay_signature: "mock_signature_bypass"
+            })
+          });
+          if (vResp.ok) {
+              alert("Mock payment verification successful!");
+          } else {
+              alert("Mock payment failed.");
+          }
+      } else {
+          alert("Mock payment cancelled.");
+      }
+      location.reload();
+      return;
+    }
+
+    const options = {
+      key: data.key_id,
+      amount: data.amount,
+      currency: data.currency,
+      name: data.name,
+      description: data.description,
+      order_id: data.order_id,
+      prefill: data.prefill || {},
+      notes: data.notes || {},
+      handler: async function (response){
+        buyBtn.disabled = true;
+        buyBtn.innerText = "Verifying payment...";
+        try {
+          const vResp = await fetch("/payments/verify", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "X-CSRFToken": (document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || "")
+            },
+            body: JSON.stringify({
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature
+            })
+          });
+          if (vResp.ok) {
+            alert("Payment completed and verified successfully!");
+          } else {
+            alert("Payment verification pending or failed. Refresh to check status.");
+          }
+        } catch (err) {
+          console.error(err);
+          alert("Connection error during verification.");
+        } finally {
+          location.reload();
+        }
+      }
+    };
+    const rzp = new Razorpay(options);
+    rzp.open();
+
+  } catch (e) {
+    console.error(e);
+    alert((e && e.message) ? e.message : "Something went wrong.");
+  } finally {
+    buyBtn.disabled = false;
+    buyBtn.innerText = "Buy & Download";
+  }
+});
+</script>
+{% endif %}
+{% endblock %}

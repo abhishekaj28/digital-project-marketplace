@@ -1,0 +1,719 @@
+{
+	"info": {
+		"_postman_id": "879a83d7-21fb-429a-8a50-93da9d0738a1",
+		"name": "ProjectHub API",
+		"description": "Standardized REST API collection for ProjectHub marketplace, supporting user authentication, catalog browsing, wishlist management, checkout, and administrative dashboard analytics.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Auth",
+			"item": [
+				{
+					"name": "Register User",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"student@example.com\",\n    \"password\": \"StudentPassword@123\",\n    \"name\": \"John Doe\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/register",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"register"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Login User",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"student@example.com\",\n    \"password\": \"StudentPassword@123\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/login",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"login"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Refresh Token",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"refresh_token\": \"{{refresh_token}}\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/refresh",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"refresh"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Forgot Password",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"student@example.com\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/forgot-password",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"forgot-password"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Reset Password",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"token\": \"{{reset_token}}\",\n    \"password\": \"NewPassword@123\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/reset-password",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"reset-password"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Projects & Categories",
+			"item": [
+				{
+					"name": "Get All Categories",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/categories",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"categories"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Projects",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/projects?category=artificial-intelligence&price=under1000&sort=popularity",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"projects"
+							],
+							"query": [
+								{
+									"key": "category",
+									"value": "artificial-intelligence"
+								},
+								{
+									"key": "price",
+									"value": "under1000"
+								},
+								{
+									"key": "sort",
+									"value": "popularity"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Project by ID or Slug",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/projects/ai-resume-screening-parser-system",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"projects",
+								"ai-resume-screening-parser-system"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Search Projects",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/projects/search?q=resume",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"projects",
+								"search"
+							],
+							"query": [
+								{
+									"key": "q",
+									"value": "resume"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Reviews",
+			"item": [
+				{
+					"name": "Get Project Reviews",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/reviews/603f9b2d6a782b3d3c8c919a",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"reviews",
+								"603f9b2d6a782b3d3c8c919a"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Post Review",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"projectId\": \"603f9b2d6a782b3d3c8c919a\",\n    \"rating\": 5,\n    \"comment\": \"Excellent resource! Completed code and report are top notch.\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/reviews",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"reviews"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Wishlist",
+			"item": [
+				{
+					"name": "Get Wishlist",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/wishlist",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"wishlist"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Add to Wishlist",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"projectId\": \"603f9b2d6a782b3d3c8c919a\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/wishlist/add",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"wishlist",
+								"add"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Remove from Wishlist",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/wishlist/remove/603f9b2d6a782b3d3c8c919a",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"wishlist",
+								"remove",
+								"603f9b2d6a782b3d3c8c919a"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Payments & Downloads",
+			"item": [
+				{
+					"name": "Create Payment Order",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"projectId\": \"603f9b2d6a782b3d3c8c919a\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/payments/create-order",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"payments",
+								"create-order"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Verify Payment Order",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"razorpay_order_id\": \"order_mock_12345678\",\n    \"razorpay_payment_id\": \"pay_mock_12345678\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/payments/verify",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"payments",
+								"verify"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get User Purchases",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/purchases",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"purchases"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Available Downloads List",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/downloads",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"downloads"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Admin Dashboard",
+			"item": [
+				{
+					"name": "Get Analytics",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/admin/analytics",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"admin",
+								"analytics"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Users List",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/admin/users",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"admin",
+								"users"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Orders List",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/admin/orders",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"admin",
+								"orders"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Project (Form-Data)",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "title",
+									"value": "AI resume ranking system",
+									"type": "text"
+								},
+								{
+									"key": "category",
+									"value": "artificial-intelligence",
+									"type": "text"
+								},
+								{
+									"key": "price",
+									"value": "899",
+									"type": "text"
+								},
+								{
+									"key": "description",
+									"value": "Short description of project",
+									"type": "text"
+								},
+								{
+									"key": "longDescription",
+									"value": "Detailed features and guidelines",
+									"type": "text"
+								},
+								{
+									"key": "technologies",
+									"value": "React, Python, BERT, MongoDB",
+									"type": "text"
+								},
+								{
+									"key": "thumbnail",
+									"type": "file",
+									"src": []
+								},
+								{
+									"key": "zipFile",
+									"type": "file",
+									"src": []
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/admin/projects",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"admin",
+								"projects"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://127.0.0.1:5000/api",
+			"type": "string"
+		},
+		{
+			"key": "access_token",
+			"value": "your_access_token_here",
+			"type": "string"
+		},
+		{
+			"key": "refresh_token",
+			"value": "your_refresh_token_here",
+			"type": "string"
+		},
+		{
+			"key": "reset_token",
+			"value": "your_reset_token_here",
+			"type": "string"
+		}
+	]
+}

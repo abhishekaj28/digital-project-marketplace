@@ -1,0 +1,304 @@
+{% extends "admin/base_admin.html" %}
+{% block title %}Dashboard | Tech Project Marketplace{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h1 class="h3 mb-0 fw-bold">Dashboard</h1>
+    <p class="text-secondary small mb-0">Overview of project marketplace operations, uploads, and revenue analytics.</p>
+  </div>
+  <div class="text-secondary small">
+    <i class="bi bi-clock me-1"></i> Data as of: <span class="fw-semibold">Just Now</span>
+  </div>
+</div>
+
+<!-- Stats Cards Grid -->
+<div class="row g-3 mb-4">
+  <!-- Total Categories -->
+  <div class="col-6 col-md-4 col-lg-2">
+    <div class="card h-100 card-hover">
+      <div class="card-body d-flex flex-column justify-content-between">
+        <div class="d-flex align-items-center justify-content-between mb-2">
+          <span class="text-secondary small fw-semibold">Categories</span>
+          <div class="rounded p-1 bg-primary bg-opacity-10 text-primary"><i class="bi bi-tags fs-5"></i></div>
+        </div>
+        <div>
+          <h3 class="fw-bold mb-0">{{ cats }}</h3>
+          <span class="text-success small"><i class="bi bi-arrow-up-short"></i> Active</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Total Projects -->
+  <div class="col-6 col-md-4 col-lg-2">
+    <div class="card h-100 card-hover">
+      <div class="card-body d-flex flex-column justify-content-between">
+        <div class="d-flex align-items-center justify-content-between mb-2">
+          <span class="text-secondary small fw-semibold">Projects</span>
+          <div class="rounded p-1 bg-info bg-opacity-10 text-info"><i class="bi bi-grid fs-5"></i></div>
+        </div>
+        <div>
+          <h3 class="fw-bold mb-0">{{ projects }}</h3>
+          <span class="text-success small"><i class="bi bi-arrow-up-short"></i> Active</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Total Users -->
+  <div class="col-6 col-md-4 col-lg-2">
+    <div class="card h-100 card-hover">
+      <div class="card-body d-flex flex-column justify-content-between">
+        <div class="d-flex align-items-center justify-content-between mb-2">
+          <span class="text-secondary small fw-semibold">Users</span>
+          <div class="rounded p-1 bg-warning bg-opacity-10 text-warning"><i class="bi bi-people fs-5"></i></div>
+        </div>
+        <div>
+          <h3 class="fw-bold mb-0">{{ users }}</h3>
+          <span class="text-success small"><i class="bi bi-arrow-up-short"></i> Verified</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Total Sales -->
+  <div class="col-6 col-md-4 col-lg-2">
+    <div class="card h-100 card-hover">
+      <div class="card-body d-flex flex-column justify-content-between">
+        <div class="d-flex align-items-center justify-content-between mb-2">
+          <span class="text-secondary small fw-semibold">Total Sales</span>
+          <div class="rounded p-1 bg-success bg-opacity-10 text-success"><i class="bi bi-cart fs-5"></i></div>
+        </div>
+        <div>
+          <h3 class="fw-bold mb-0">{{ purchases }}</h3>
+          <span class="text-secondary small">Completed orders</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Revenue -->
+  <div class="col-6 col-md-4 col-lg-2">
+    <div class="card h-100 card-hover" style="border-left: 3px solid var(--admin-accent-blue) !important;">
+      <div class="card-body d-flex flex-column justify-content-between">
+        <div class="d-flex align-items-center justify-content-between mb-2">
+          <span class="text-secondary small fw-semibold">Revenue</span>
+          <div class="rounded p-1 bg-primary bg-opacity-15 text-primary" style="color: var(--admin-accent-blue) !important;"><i class="bi bi-currency-rupee fs-5"></i></div>
+        </div>
+        <div>
+          <h3 class="fw-bold mb-0">₹{{ revenue }}</h3>
+          <span class="text-success small"><i class="bi bi-graph-up"></i> Net profits</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Downloads -->
+  <div class="col-6 col-md-4 col-lg-2">
+    <div class="card h-100 card-hover">
+      <div class="card-body d-flex flex-column justify-content-between">
+        <div class="d-flex align-items-center justify-content-between mb-2">
+          <span class="text-secondary small fw-semibold">Downloads</span>
+          <div class="rounded p-1 bg-secondary bg-opacity-10 text-light"><i class="bi bi-download fs-5"></i></div>
+        </div>
+        <div>
+          <h3 class="fw-bold mb-0">{{ downloads }}</h3>
+          <span class="text-secondary small">Total items delivered</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Charts Section -->
+<div class="row g-4 mb-4">
+  <!-- Revenue Analytics -->
+  <div class="col-lg-6">
+    <div class="card p-3">
+      <h5 class="fw-bold mb-3 small text-secondary text-uppercase tracking-wider">Revenue Analytics (Last 7 Days)</h5>
+      <div style="height: 250px; position: relative;">
+        <canvas id="revenueChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- User Registrations -->
+  <div class="col-lg-6">
+    <div class="card p-3">
+      <h5 class="fw-bold mb-3 small text-secondary text-uppercase tracking-wider">User Registrations (Last 7 Days)</h5>
+      <div style="height: 250px; position: relative;">
+        <canvas id="userRegistrationsChart"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Tables & Categories split -->
+<div class="row g-4 mb-4">
+  <!-- Recent Purchases -->
+  <div class="col-lg-8">
+    <div class="card">
+      <div class="card-header border-bottom border-secondary border-opacity-10 d-flex justify-content-between align-items-center bg-transparent py-3">
+        <h5 class="card-title mb-0 fw-semibold">Recent Purchases</h5>
+        <a href="{{ url_for('admin.purchases') }}" class="btn btn-outline-primary btn-sm">All Sales</a>
+      </div>
+      <div class="table-responsive">
+        <table class="table mb-0 align-middle">
+          <thead>
+            <tr>
+              <th>Order ID</th>
+              <th>Customer</th>
+              <th>Project Title</th>
+              <th>Amount</th>
+              <th>Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for p in recent_purchases %}
+              <tr>
+                <td><code class="text-info">{{ p.razorpay_order_id }}</code></td>
+                <td>{{ p.user.email if p.user else 'Deleted User' }}</td>
+                <td class="text-truncate" style="max-width: 180px;">{{ p.project.title if p.project else 'Deleted Project' }}</td>
+                <td class="text-success fw-bold">₹{{ p.price_inr }}</td>
+                <td class="text-secondary small">{{ p.created_at.strftime("%Y-%m-%d %H:%M") }}</td>
+              </tr>
+            {% else %}
+              <tr>
+                <td colspan="5" class="text-muted text-center py-4">No completed orders logged yet.</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Top categories summary list -->
+  <div class="col-lg-4">
+    <div class="card h-100">
+      <div class="card-header border-bottom border-secondary border-opacity-10 bg-transparent py-3">
+        <h5 class="card-title mb-0 fw-semibold">Top Selling Domains</h5>
+      </div>
+      <div class="card-body">
+        {% for cat in top_selling_cats %}
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <div class="d-flex align-items-center gap-2">
+              <span class="rounded bg-primary bg-opacity-10 p-1 text-primary d-inline-flex"><i class="bi bi-folder-check"></i></span>
+              <div class="fw-semibold small">{{ cat.name }}</div>
+            </div>
+            <span class="badge badge-soft-success">{{ cat.sales }} Sales</span>
+          </div>
+        {% else %}
+          <div class="text-muted text-center py-5">No category sales metrics recorded.</div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Uploaded projects quick list -->
+<div class="card mb-4">
+  <div class="card-header border-bottom border-secondary border-opacity-10 d-flex justify-content-between align-items-center bg-transparent py-3">
+    <h5 class="card-title mb-0 fw-semibold">Recent Uploaded Projects</h5>
+    <a href="{{ url_for('admin.projects_new') }}" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg me-1"></i>New Project</a>
+  </div>
+  <div class="table-responsive">
+    <table class="table mb-0 align-middle">
+      <thead>
+        <tr>
+          <th>Title</th>
+          <th>Category</th>
+          <th>Price</th>
+          <th>Sales Count</th>
+          <th>Upload Date</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for proj in recent_uploads %}
+          <tr>
+            <td class="fw-semibold">{{ proj.title }}</td>
+            <td><span class="badge bg-secondary bg-opacity-25 text-light">{{ proj.category_name }}</span></td>
+            <td class="text-success fw-bold">₹{{ proj.price_inr }}</td>
+            <td class="text-secondary"><i class="bi bi-cart me-1"></i>{{ proj.sales_count }}</td>
+            <td class="text-secondary small">{{ proj.created_at.strftime("%Y-%m-%d") }}</td>
+            <td>
+              <a href="{{ url_for('admin.projects_edit', project_id=proj._id) }}" class="btn btn-outline-primary btn-sm px-2.5" title="Edit"><i class="bi bi-pencil-square"></i></a>
+              <a href="{{ url_for('main.project_detail', project_id=proj._id) }}" class="btn btn-outline-secondary btn-sm px-2.5 ms-1" target="_blank" title="View"><i class="bi bi-eye"></i></a>
+            </td>
+          </tr>
+        {% else %}
+          <tr>
+            <td colspan="6" class="text-muted text-center py-4">No projects uploaded yet.</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+  document.addEventListener("DOMContentLoaded", function() {
+    // 1. Revenue Chart
+    const ctxRevenue = document.getElementById('revenueChart').getContext('2d');
+    new Chart(ctxRevenue, {
+      type: 'line',
+      data: {
+        labels: {{ chart_labels | tojson }},
+        datasets: [{
+          label: 'Revenue (₹)',
+          data: {{ chart_revenue | tojson }},
+          borderColor: '#3B82F6',
+          backgroundColor: 'rgba(59, 130, 246, 0.15)',
+          borderWidth: 2,
+          fill: true,
+          tension: 0.3
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false }
+        },
+        scales: {
+          x: { grid: { color: 'rgba(255, 255, 255, 0.05)' }, ticks: { color: '#94A3B8' } },
+          y: { grid: { color: 'rgba(255, 255, 255, 0.05)' }, ticks: { color: '#94A3B8' } }
+        }
+      }
+    });
+
+    // 2. Registrations Chart
+    const ctxRegs = document.getElementById('userRegistrationsChart').getContext('2d');
+    new Chart(ctxRegs, {
+      type: 'bar',
+      data: {
+        labels: {{ chart_labels | tojson }},
+        datasets: [{
+          label: 'New Registrations',
+          data: {{ chart_registrations | tojson }},
+          backgroundColor: 'rgba(96, 165, 250, 0.65)',
+          borderColor: '#60A5FA',
+          borderWidth: 1,
+          borderRadius: 4
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false }
+        },
+        scales: {
+          x: { grid: { display: false }, ticks: { color: '#94A3B8' } },
+          y: { grid: { color: 'rgba(255, 255, 255, 0.05)' }, ticks: { color: '#94A3B8' }, precision: 0 }
+        }
+      }
+    });
+  });
+</script>
+{% endblock %}

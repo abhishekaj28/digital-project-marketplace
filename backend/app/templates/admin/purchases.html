@@ -1,0 +1,134 @@
+{% extends "admin/base_admin.html" %}
+{% block title %}Purchase Management | Tech Project Marketplace{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h1 class="h3 mb-0 fw-bold">Purchase Management</h1>
+    <p class="text-secondary small mb-0">Monitor transactions, trace payment orders, audit client downloads, and export CSV ledger sheets.</p>
+  </div>
+  <a class="btn btn-outline-primary" href="{{ url_for('admin.purchases_export', **request.args) }}">
+    <i class="bi bi-download me-1"></i> Export CSV
+  </a>
+</div>
+
+<!-- Filters Panel -->
+<div class="card p-3 mb-4">
+  <form class="row g-2 align-items-end" method="get">
+    <!-- Status -->
+    <div class="col-md-2">
+      <label class="form-label small text-secondary fw-semibold">Payment Status</label>
+      <select class="form-select form-select-sm" name="status">
+        <option value="" {% if not q.status %}selected{% endif %}>All</option>
+        <option value="created" {% if q.status=='created' %}selected{% endif %}>Created</option>
+        <option value="completed" {% if q.status=='completed' %}selected{% endif %}>Completed</option>
+        <option value="failed" {% if q.status=='failed' %}selected{% endif %}>Failed</option>
+      </select>
+    </div>
+    
+    <!-- Email -->
+    <div class="col-md-2">
+      <label class="form-label small text-secondary fw-semibold">Customer Email</label>
+      <input class="form-control form-control-sm" name="email" value="{{ q.email or '' }}" placeholder="Customer email...">
+    </div>
+    
+    <!-- Project -->
+    <div class="col-md-2">
+      <label class="form-label small text-secondary fw-semibold">Project Title</label>
+      <input class="form-control form-control-sm" name="project" value="{{ q.project or '' }}" placeholder="Project title...">
+    </div>
+    
+    <!-- Date Range From -->
+    <div class="col-md-2">
+      <label class="form-label small text-secondary fw-semibold">From Date</label>
+      <input class="form-control form-control-sm" type="date" name="from" value="{{ q.from_ or '' }}">
+    </div>
+    
+    <!-- Date Range To -->
+    <div class="col-md-2">
+      <label class="form-label small text-secondary fw-semibold">To Date</label>
+      <input class="form-control form-control-sm" type="date" name="to" value="{{ q.to or '' }}">
+    </div>
+    
+    <!-- Order ID -->
+    <div class="col-md-2">
+      <label class="form-label small text-secondary fw-semibold">Order ID</label>
+      <input class="form-control form-control-sm" name="order" value="{{ q.order or '' }}" placeholder="Order ID...">
+    </div>
+    
+    <!-- Search action buttons -->
+    <div class="col-12 mt-2 d-flex gap-2">
+      <button class="btn btn-primary btn-sm px-4" type="submit"><i class="bi bi-funnel"></i> Apply Filters</button>
+      <a class="btn btn-outline-secondary btn-sm px-4" href="{{ url_for('admin.purchases') }}">Reset</a>
+    </div>
+  </form>
+</div>
+
+<!-- Purchases List Card -->
+<div class="card shadow-sm mb-4">
+  <div class="table-responsive">
+    <table class="table mb-0 align-middle">
+      <thead>
+        <tr>
+          <th>Order ID</th>
+          <th>Customer Name</th>
+          <th>Project Name</th>
+          <th>Amount</th>
+          <th>Date</th>
+          <th>Payment Status</th>
+          <th>Download Status</th>
+          <th class="text-end">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in rows %}
+          <tr>
+            <td><code class="text-info">{{ row.purchase.razorpay_order_id }}</code></td>
+            <td>
+              <div class="fw-semibold">{{ row.user.email.split('@')[0] if row.user else 'Deleted User' }}</div>
+              <div class="text-secondary small" style="font-size: 0.8rem;">{{ row.user.email if row.user else '—' }}</div>
+            </td>
+            <td class="text-truncate" style="max-width: 200px;" title="{{ row.project.title if row.project else 'Deleted Project' }}">
+              {{ row.project.title if row.project else 'Deleted Project' }}
+            </td>
+            <td class="text-success fw-bold">₹{{ (row.purchase.amount_paise or 0)/100 }}</td>
+            <td class="text-secondary small">
+              {{ row.purchase.created_at.strftime("%Y-%m-%d %H:%M") if row.purchase.created_at else '—' }}
+            </td>
+            <td>
+              {% if row.purchase.status == 'completed' %}
+                <span class="badge badge-soft-success">Completed</span>
+              {% elif row.purchase.status == 'failed' %}
+                <span class="badge badge-soft-danger">Failed</span>
+              {% else %}
+                <span class="badge badge-soft-warning">Created</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if row.purchase.status == 'completed' %}
+                <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-20"><i class="bi bi-unlock-fill me-1"></i> Unlocked</span>
+              {% else %}
+                <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-20"><i class="bi bi-lock-fill me-1"></i> Locked</span>
+              {% endif %}
+            </td>
+            <td class="text-end">
+              <a class="btn btn-outline-primary btn-sm" href="{{ url_for('admin.purchase_detail', purchase_id=row.purchase._id) }}">
+                <i class="bi bi-search me-1"></i> Details
+              </a>
+            </td>
+          </tr>
+        {% else %}
+          <tr>
+            <td colspan="8" class="text-muted text-center py-5">
+              <i class="bi bi-receipt fs-1 d-block mb-2 text-secondary"></i>
+              No orders matched the selected filter query.
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% include "partials/pagination.html" %}
+{% endblock %}

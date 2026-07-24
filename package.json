@@ -1,0 +1,7 @@
+{
+  "name": "digital-project-marketplace",
+  "private": true,
+  "scripts": {
+    "build": "npm --prefix frontend install && npm --prefix frontend run build && node -e \"const fs=require('fs'); if(fs.existsSync('frontend/.vercel')) fs.cpSync('frontend/.vercel','.vercel',{recursive:true});\""
+  }
+}

@@ -1,0 +1,91 @@
+{% extends "admin/base_admin.html" %}
+{% block title %}Purchase Detail | Tech Project Marketplace{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h1 class="h3 mb-0 fw-bold">Order Details</h1>
+    <p class="text-secondary small mb-0">Review detailed information for transaction order, payment tokens, and refund processes.</p>
+  </div>
+  <a class="btn btn-outline-secondary" href="{{ url_for('admin.purchases') }}">
+    <i class="bi bi-arrow-left me-1"></i> Back to Purchases
+  </a>
+</div>
+
+<div class="card p-4">
+  <h5 class="fw-bold mb-4 text-secondary small text-uppercase tracking-wider">Transaction Invoice</h5>
+  
+  <div class="row g-4 mb-4">
+    <!-- User Details -->
+    <div class="col-md-6">
+      <label class="form-label small text-secondary fw-semibold">Customer Account</label>
+      <div class="card p-3" style="background: rgba(255,255,255,0.01) !important;">
+        <div class="fw-semibold text-white">{{ user.email.split('@')[0] if user else 'Deleted User' }}</div>
+        <div class="text-secondary small">{{ user.email if user else '—' }}</div>
+      </div>
+    </div>
+    
+    <!-- Project Details -->
+    <div class="col-md-6">
+      <label class="form-label small text-secondary fw-semibold">Purchased Project</label>
+      <div class="card p-3" style="background: rgba(255,255,255,0.01) !important;">
+        <div class="fw-semibold text-white">{{ project.title if project else 'Deleted Project' }}</div>
+        <div class="text-secondary small">ID: {{ project._id if project else '—' }}</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4 mb-4 border-top border-secondary border-opacity-10 pt-4">
+    <!-- Status -->
+    <div class="col-md-4">
+      <div class="text-secondary small fw-semibold mb-1">Payment Status</div>
+      {% if purchase.status == 'completed' %}
+        <span class="badge badge-soft-success">Completed</span>
+      {% elif purchase.status == 'failed' %}
+        <span class="badge badge-soft-danger">Failed</span>
+      {% else %}
+        <span class="badge badge-soft-warning">Created</span>
+      {% endif %}
+    </div>
+
+    <!-- Amount -->
+    <div class="col-md-4">
+      <div class="text-secondary small fw-semibold mb-1">Amount Paid</div>
+      <div class="fw-bold text-success fs-5">₹{{ (purchase.amount_paise or 0)/100 }}</div>
+    </div>
+
+    <!-- Refund Status -->
+    <div class="col-md-4">
+      <div class="text-secondary small fw-semibold mb-1">Refund Status</div>
+      {% if purchase.refund_status == 'requested' %}
+        <span class="badge bg-warning bg-opacity-15 text-warning border border-warning border-opacity-25">Requested (Demo)</span>
+      {% else %}
+        <span class="text-muted small">No active refund request.</span>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="row g-4 mb-4 border-top border-secondary border-opacity-10 pt-4">
+    <!-- Order ID -->
+    <div class="col-md-6">
+      <div class="text-secondary small fw-semibold mb-1">Razorpay Order ID</div>
+      <code class="text-info">{{ purchase.razorpay_order_id }}</code>
+    </div>
+
+    <!-- Payment ID -->
+    <div class="col-md-6">
+      <div class="text-secondary small fw-semibold mb-1">Razorpay Payment ID</div>
+      <code class="text-info">{{ purchase.razorpay_payment_id or '—' }}</code>
+    </div>
+  </div>
+
+  <div class="border-top border-secondary border-opacity-10 pt-4 mt-2">
+    <form method="post" action="{{ url_for('admin.purchase_request_refund', purchase_id=purchase._id) }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button class="btn btn-outline-danger" onclick="return confirm('Request refund for this order? (Demo)')">
+        <i class="bi bi-arrow-counterclockwise me-1"></i> Trigger Refund (Demo)
+      </button>
+    </form>
+  </div>
+</div>
+{% endblock %}

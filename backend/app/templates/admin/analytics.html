@@ -1,0 +1,251 @@
+{% extends "admin/base_admin.html" %}
+{% block title %}Analytics Dashboard | Tech Project Marketplace{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h1 class="h3 mb-0 fw-bold">Analytics & Reports</h1>
+    <p class="text-secondary small mb-0">Detailed insights into sales curves, downloads, user growth velocity, and category performance charts.</p>
+  </div>
+  <div class="d-flex gap-2">
+    <div class="card p-2 px-3 d-flex flex-row align-items-center gap-2" style="background: rgba(255,255,255,0.02) !important;">
+      <span class="text-secondary small">30d Revenue:</span>
+      <span class="text-success fw-bold">₹{{ revenue_30d }}</span>
+    </div>
+    <div class="card p-2 px-3 d-flex flex-row align-items-center gap-2" style="background: rgba(255,255,255,0.02) !important;">
+      <span class="text-secondary small">30d Sales:</span>
+      <span class="text-primary fw-bold">{{ purchases_30d }}</span>
+    </div>
+  </div>
+</div>
+
+<!-- Chart Rows Grid -->
+<div class="row g-4 mb-4">
+  <!-- 1. Revenue Analytics -->
+  <div class="col-lg-6">
+    <div class="card p-3 h-100">
+      <h5 class="fw-bold mb-3 small text-secondary text-uppercase tracking-wider">Revenue Analytics (14 Days)</h5>
+      <div style="height: 250px; position: relative;">
+        <canvas id="chartRevenue"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. User Growth -->
+  <div class="col-lg-6">
+    <div class="card p-3 h-100">
+      <h5 class="fw-bold mb-3 small text-secondary text-uppercase tracking-wider">User Growth Velocity</h5>
+      <div style="height: 250px; position: relative;">
+        <canvas id="chartUserGrowth"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. Downloads Analytics -->
+  <div class="col-lg-6">
+    <div class="card p-3 h-100">
+      <h5 class="fw-bold mb-3 small text-secondary text-uppercase tracking-wider">Downloads volume</h5>
+      <div style="height: 250px; position: relative;">
+        <canvas id="chartDownloads"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. Category Performance -->
+  <div class="col-lg-6">
+    <div class="card p-3 h-100">
+      <h5 class="fw-bold mb-3 small text-secondary text-uppercase tracking-wider">Category Revenue Share (₹)</h5>
+      <div style="height: 250px; position: relative;">
+        <canvas id="chartCategoryPerformance"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- 5. Top Selling Projects -->
+  <div class="col-lg-6">
+    <div class="card p-3 h-100">
+      <h5 class="fw-bold mb-3 small text-secondary text-uppercase tracking-wider">Top Selling Projects</h5>
+      <div style="height: 250px; position: relative;">
+        <canvas id="chartTopProjects"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- 6. Top Categories Sales counts -->
+  <div class="col-lg-6">
+    <div class="card p-3 h-100">
+      <h5 class="fw-bold mb-3 small text-secondary text-uppercase tracking-wider">Domain Volume Distribution</h5>
+      <div style="height: 250px; position: relative;">
+        <canvas id="chartTopCategories"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  document.addEventListener("DOMContentLoaded", function() {
+    // Labels common configuration
+    const labels14 = [{% for item in by_day %}"{{ item.day }}"{% if not loop.last %},{% endif %}{% endfor %}];
+    
+    // 1. Revenue Chart
+    const revenueData = [{% for item in by_day %}{{ item.revenue }}{% if not loop.last %},{% endif %}{% endfor %}];
+    new Chart(document.getElementById('chartRevenue').getContext('2d'), {
+      type: 'line',
+      data: {
+        labels: labels14,
+        datasets: [{
+          label: 'Daily Revenue',
+          data: revenueData,
+          borderColor: '#3B82F6',
+          backgroundColor: 'rgba(59, 130, 246, 0.1)',
+          borderWidth: 2.5,
+          fill: true,
+          tension: 0.35
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { grid: { color: 'rgba(255, 255, 255, 0.05)' }, ticks: { color: '#94A3B8' } },
+          y: { grid: { color: 'rgba(255, 255, 255, 0.05)' }, ticks: { color: '#94A3B8' } }
+        }
+      }
+    });
+
+    // 2. User Growth Chart
+    const userGrowthLabels = [{% for item in user_growth_trends %}"{{ item.day }}"{% if not loop.last %},{% endif %}{% endfor %}];
+    const userGrowthData = [{% for item in user_growth_trends %}{{ item.count }}{% if not loop.last %},{% endif %}{% endfor %}];
+    new Chart(document.getElementById('chartUserGrowth').getContext('2d'), {
+      type: 'bar',
+      data: {
+        labels: userGrowthLabels,
+        datasets: [{
+          label: 'Registrations',
+          data: userGrowthData,
+          backgroundColor: 'rgba(96, 165, 250, 0.75)',
+          borderRadius: 4
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { grid: { display: false }, ticks: { color: '#94A3B8' } },
+          y: { grid: { color: 'rgba(255, 255, 255, 0.05)' }, ticks: { color: '#94A3B8' }, precision: 0 }
+        }
+      }
+    });
+
+    // 3. Downloads Volume Chart
+    const downloadsData = [{% for item in downloads_day %}{{ item.downloads }}{% if not loop.last %},{% endif %}{% endfor %}];
+    new Chart(document.getElementById('chartDownloads').getContext('2d'), {
+      type: 'line',
+      data: {
+        labels: labels14,
+        datasets: [{
+          label: 'File Downloads',
+          data: downloadsData,
+          borderColor: '#10B981',
+          backgroundColor: 'rgba(16, 185, 129, 0.05)',
+          borderWidth: 2,
+          tension: 0.3,
+          fill: true
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { grid: { color: 'rgba(255, 255, 255, 0.05)' }, ticks: { color: '#94A3B8' } },
+          y: { grid: { color: 'rgba(255, 255, 255, 0.05)' }, ticks: { color: '#94A3B8' } }
+        }
+      }
+    });
+
+    // 4. Category Performance Chart
+    const catLabels = [{% for item in by_category %}"{{ item.name }}"{% if not loop.last %},{% endif %}{% endfor %}];
+    const catRevenue = [{% for item in by_category %}{{ item.revenue }}{% if not loop.last %},{% endif %}{% endfor %}];
+    const bgColors = ['#3B82F6', '#8B5CF6', '#10B981', '#F59E0B', '#EF4444', '#EC4899', '#14B8A6'];
+    
+    new Chart(document.getElementById('chartCategoryPerformance').getContext('2d'), {
+      type: 'doughnut',
+      data: {
+        labels: catLabels.length ? catLabels : ["No sales yet"],
+        datasets: [{
+          data: catRevenue.length ? catRevenue : [0],
+          backgroundColor: bgColors,
+          borderWidth: 0
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'right', labels: { color: '#94A3B8', boxWidth: 12 } }
+        }
+      }
+    });
+
+    // 5. Top Projects (Horizontal Bar Chart)
+    const topProjLabels = [{% for p in top_projects %}"{{ p.title | truncate(20) }}"{% if not loop.last %},{% endif %}{% endfor %}];
+    const topProjSales = [{% for p in top_projects %}{{ p.sales_count }}{% if not loop.last %},{% endif %}{% endfor %}];
+    new Chart(document.getElementById('chartTopProjects').getContext('2d'), {
+      type: 'bar',
+      data: {
+        labels: topProjLabels,
+        datasets: [{
+          label: 'Downloads',
+          data: topProjSales,
+          backgroundColor: 'rgba(139, 92, 246, 0.75)',
+          borderRadius: 4
+        }]
+      },
+      options: {
+        indexAxis: 'y',
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { grid: { color: 'rgba(255, 255, 255, 0.05)' }, ticks: { color: '#94A3B8' } },
+          y: { grid: { display: false }, ticks: { color: '#94A3B8' } }
+        }
+      }
+    });
+
+    // 6. Top Categories volume distribution
+    const topCatLabels = [{% for item in by_category %}"{{ item.name }}"{% if not loop.last %},{% endif %}{% endfor %}];
+    const topCatCounts = [{% for item in by_category %}{{ item.orders }}{% if not loop.last %},{% endif %}{% endfor %}];
+    new Chart(document.getElementById('chartTopCategories').getContext('2d'), {
+      type: 'polarArea',
+      data: {
+        labels: topCatLabels.length ? topCatLabels : ["No orders"],
+        datasets: [{
+          data: topCatCounts.length ? topCatCounts : [0],
+          backgroundColor: bgColors.map(c => c + 'AA'),
+          borderWidth: 0
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'right', labels: { color: '#94A3B8', boxWidth: 12 } }
+        },
+        scales: {
+          r: {
+            grid: { color: 'rgba(255, 255, 255, 0.05)' },
+            angleLines: { color: 'rgba(255, 255, 255, 0.05)' },
+            ticks: { display: false }
+          }
+        }
+      }
+    });
+  });
+</script>
+{% endblock %}

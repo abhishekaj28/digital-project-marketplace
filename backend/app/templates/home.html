@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+{% block title %}Home | Tech Project Marketplace{% endblock %}
+{% block content %}
+
+<!-- Hero Search Section -->
+<div class="card p-5 mb-5 text-center border-0" style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.15) 0%, rgba(139, 92, 246, 0.1) 100%) !important;">
+  <div class="row justify-content-center py-3">
+    <div class="col-lg-8">
+      <h1 class="display-5 fw-bold mb-3" style="letter-spacing: -1px;">Find Premium Projects & Academics</h1>
+      <p class="text-secondary fs-5 mb-4">Discover source code, reports, presentations, and documentation across 20+ disciplines.</p>
+      
+      <form class="row g-2 justify-content-center" method="get" action="{{ url_for('main.search') }}">
+        <div class="col-md-7">
+          <div class="input-group">
+            <span class="input-group-text bg-transparent border-end-0"><i class="bi bi-search text-secondary"></i></span>
+            <input class="form-control border-start-0 py-2" type="search" name="q" placeholder="What are you looking to build or learn?" aria-label="Search text">
+          </div>
+        </div>
+        <div class="col-md-3">
+          <select class="form-select py-2" name="category">
+            <option value="">All Categories</option>
+            {% for c in categories %}
+              <option value="{{ c.slug }}">{{ c.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-2 d-grid">
+          <button class="btn btn-primary py-2" type="submit">Search</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Categories Directory -->
+<div class="mb-5">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="h4 mb-0 fw-semibold">Browse by Category</h2>
+    <span class="text-secondary small">{{ categories|length }} Fields</span>
+  </div>
+  
+  <div class="row g-2 row-cols-2 row-cols-md-4 row-cols-lg-5">
+    {% for c in categories %}
+      <div class="col">
+        <a class="text-decoration-none" href="{{ url_for('main.category', slug=c.slug) }}">
+          <div class="card p-2 text-center h-100 card-hover" style="background: rgba(255,255,255,0.01) !important;">
+            <div class="card-body py-3 d-flex flex-column align-items-center justify-content-center">
+              <i class="bi bi-journal-code text-primary fs-3 mb-2" style="color: var(--accent-indigo) !important;"></i>
+              <div class="fw-semibold text-truncate w-100" style="font-size: 0.9rem;">{{ c.name }}</div>
+            </div>
+          </div>
+        </a>
+      </div>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- 1. Featured Projects -->
+<div class="mb-5">
+  <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-2">
+    <h2 class="h4 mb-0 fw-bold"><i class="bi bi-star-fill text-warning me-2"></i>Featured Projects</h2>
+    <span class="text-secondary small">Curated premium builds</span>
+  </div>
+  <div class="row g-4">
+    {% for p in featured %}
+      <div class="col-md-6 col-lg-4">
+        <div class="card h-100">
+          <div class="card-body d-flex flex-column">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+              <span class="badge bg-secondary text-light small">{{ p.category_name }}</span>
+              <span class="text-success fw-bold">₹{{ p.price_inr }}</span>
+            </div>
+            <h3 class="h5 card-title fw-semibold mb-2">{{ p.title }}</h3>
+            <p class="text-secondary small card-text mb-4 flex-grow-1">{{ p.short_desc }}</p>
+            <div class="d-flex justify-content-between align-items-center mt-auto">
+              <span class="text-muted small"><i class="bi bi-cart-check me-1"></i>{{ p.sales_count }} sales</span>
+              <a href="{{ url_for('main.project_detail', project_id=p._id) }}" class="btn btn-outline-primary btn-sm px-3">View Details</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- 2. Top-Selling / Best Sellers -->
+<div class="mb-5">
+  <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-2">
+    <h2 class="h4 mb-0 fw-bold"><i class="bi bi-fire text-danger me-2"></i>Best Sellers</h2>
+    <span class="text-secondary small">Trending in the community</span>
+  </div>
+  <div class="row g-4">
+    {% for p in top_selling %}
+      <div class="col-md-6 col-lg-4">
+        <div class="card h-100">
+          <div class="card-body d-flex flex-column">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+              <span class="badge bg-secondary text-light small">{{ p.category_name }}</span>
+              <span class="text-success fw-bold">₹{{ p.price_inr }}</span>
+            </div>
+            <h3 class="h5 card-title fw-semibold mb-2">{{ p.title }}</h3>
+            <p class="text-secondary small card-text mb-4 flex-grow-1">{{ p.short_desc }}</p>
+            <div class="d-flex justify-content-between align-items-center mt-auto">
+              <span class="text-muted small"><i class="bi bi-graph-up-arrow me-1 text-danger"></i>{{ p.sales_count }} sales</span>
+              <a href="{{ url_for('main.project_detail', project_id=p._id) }}" class="btn btn-outline-primary btn-sm px-3">View Details</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- 3. Recently Added -->
+<div class="mb-5">
+  <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-2">
+    <h2 class="h4 mb-0 fw-bold"><i class="bi bi-clock-history text-info me-2"></i>New Arrivals</h2>
+    <span class="text-secondary small">Recently uploaded</span>
+  </div>
+  <div class="row g-4">
+    {% for p in recent %}
+      <div class="col-md-6 col-lg-4">
+        <div class="card h-100">
+          <div class="card-body d-flex flex-column">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+              <span class="badge bg-secondary text-light small">{{ p.category_name }}</span>
+              <span class="text-success fw-bold">₹{{ p.price_inr }}</span>
+            </div>
+            <h3 class="h5 card-title fw-semibold mb-2">{{ p.title }}</h3>
+            <p class="text-secondary small card-text mb-4 flex-grow-1">{{ p.short_desc }}</p>
+            <div class="d-flex justify-content-between align-items-center mt-auto">
+              <span class="text-muted small"><i class="bi bi-calendar-event me-1"></i>New</span>
+              <a href="{{ url_for('main.project_detail', project_id=p._id) }}" class="btn btn-outline-primary btn-sm px-3">View Details</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+</div>
+
+{% endblock %}
