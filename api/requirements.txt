@@ -13,3 +13,4 @@ Flask-Mail==0.10.0
 PyJWT==2.8.0
 Flask-CORS==4.0.1
 cloudinary==1.36.0
+setuptools
