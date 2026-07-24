@@ -1,7 +1,19 @@
 import axios from "axios";
 
+const getBaseURL = () => {
+  if (typeof window !== "undefined") {
+    // Client-side: use VITE_API_URL if set, or empty to let browser resolve relative URLs
+    return import.meta.env.VITE_API_URL || "";
+  }
+  // Server-side (SSR): resolve to Vercel domain or localhost backend
+  if (process.env.VERCEL_URL) {
+    return `https://${process.env.VERCEL_URL}`;
+  }
+  return "http://localhost:5000";
+};
+
 const API = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || "http://localhost:5000",
+  baseURL: getBaseURL(),
   headers: {
     "Content-Type": "application/json",
   },
