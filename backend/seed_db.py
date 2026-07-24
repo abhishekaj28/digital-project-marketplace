@@ -8,16 +8,17 @@ sys.path.append(os.path.abspath(os.path.dirname(__file__)))
 
 from app.security import hash_password
 
-def seed_database():
-    print("Connecting to MongoDB...")
-    mongo_uri = os.getenv("MONGO_URI", "mongodb://localhost:27017/tech_marketplace")
-    client = MongoClient(mongo_uri)
-    
-    # Extract DB name from URI or use default
-    try:
-        db = client.get_default_database()
-    except Exception:
-        db = client["tech_marketplace"]
+def seed_database(db=None):
+    if db is None:
+        print("Connecting to MongoDB...")
+        mongo_uri = os.getenv("MONGO_URI", "mongodb://localhost:27017/tech_marketplace")
+        client = MongoClient(mongo_uri)
+        
+        # Extract DB name from URI or use default
+        try:
+            db = client.get_default_database()
+        except Exception:
+            db = client["tech_marketplace"]
 
     print(f"Using database: {db.name}")
 
